@@ -1,0 +1,22 @@
+# Secrets
+firmware/include/secrets.h
+server/.env
+
+# Firmware build output
+firmware/.pio/
+.pio/
+
+# Voice design previews
+voice-previews/
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Editors and OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

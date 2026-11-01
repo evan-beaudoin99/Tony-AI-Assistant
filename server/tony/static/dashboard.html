@@ -1,0 +1,242 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tony</title>
+<style>
+  :root {
+    --bg: #111214; --panel: #1b1d21; --line: #2a2d33; --text: #e9e9ea; --dim: #9a9ca3;
+    --taxi: #ffcc00; --green: #3cdc5a; --red: #ff4848; --orange: #ff9a00; --blue: #6ab8ff;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.45 system-ui, "Segoe UI", sans-serif; }
+  header { display: flex; align-items: center; gap: 16px; padding: 14px 22px; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+  .logo { font-weight: 800; font-size: 22px; letter-spacing: 2px; color: var(--taxi); }
+  .checker { width: 64px; height: 12px; background: repeating-conic-gradient(var(--taxi) 0 25%, #000 0 50%) 0 0 / 12px 12px; border-radius: 2px; }
+  .pills { display: flex; gap: 8px; flex-wrap: wrap; margin-left: auto; }
+  .pill { padding: 4px 10px; border-radius: 999px; background: var(--panel); border: 1px solid var(--line); color: var(--dim); font-size: 13px; }
+  .pill b { color: var(--text); font-weight: 600; }
+  .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; background: var(--red); }
+  .dot.on { background: var(--green); }
+  main { display: grid; grid-template-columns: minmax(300px, 680px) minmax(320px, 1fr); gap: 20px; padding: 20px 22px; }
+  @media (max-width: 900px) { main { grid-template-columns: 1fr; } }
+  section { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 16px; }
+  h2 { margin: 0 0 12px; font-size: 13px; text-transform: uppercase; letter-spacing: 1.5px; color: var(--dim); font-weight: 600; }
+  .screens { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  @media (max-width: 600px) { .screens { grid-template-columns: 1fr; } }
+  .screen { aspect-ratio: 4 / 3; background: #000; border-radius: 8px; border: 1px solid var(--line); overflow: hidden;
+            display: grid; place-items: center; color: #555; font-size: 13px; text-align: center; padding: 0; }
+  .screen img { width: 100%; height: 100%; object-fit: cover; display: none; }
+  .tft { width: 100%; aspect-ratio: 4 / 3; display: block; background: #000; border-radius: 8px;
+         border: 1px solid var(--line); image-rendering: pixelated; }
+  .screen.has img { display: block; }
+  .screen.has span { display: none; }
+  .caption { margin-top: 6px; font-size: 12px; color: var(--dim); }
+  .controls { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; align-items: center; }
+  button { background: #2a2d33; color: var(--text); border: 1px solid #3a3e46; border-radius: 8px; padding: 8px 14px;
+           font: inherit; cursor: pointer; }
+  button:hover { border-color: var(--taxi); }
+  button.primary { background: var(--taxi); color: #111; border-color: var(--taxi); font-weight: 700; }
+  button.danger.on { background: var(--red); border-color: var(--red); color: #fff; }
+  label { display: inline-flex; gap: 6px; align-items: center; color: var(--dim); font-size: 14px; cursor: pointer; }
+  input[type=range] { accent-color: var(--taxi); }
+  .chat { display: flex; flex-direction: column; height: calc(100vh - 140px); min-height: 420px; }
+  #log { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding-right: 4px; }
+  .msg { max-width: 85%; padding: 8px 12px; border-radius: 12px; }
+  .msg .t { font-size: 11px; color: var(--dim); margin-bottom: 2px; }
+  .you { align-self: flex-end; background: #253247; }
+  .tony { align-self: flex-start; background: #3a3214; border: 1px solid #5a4a10; }
+  .system, .overheard { align-self: center; background: none; color: var(--dim); font-size: 13px; padding: 2px; }
+  .overheard { font-style: italic; }
+  form { display: flex; gap: 8px; margin-top: 12px; }
+  input[type=text] { flex: 1; background: #101114; color: var(--text); border: 1px solid #3a3e46; border-radius: 8px;
+                     padding: 10px 12px; font: inherit; }
+  input[type=text]:focus { outline: none; border-color: var(--taxi); }
+  footer { color: var(--dim); font-size: 12px; padding: 0 22px 18px; }
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">TONY</div>
+  <div class="checker"></div>
+  <div class="pills">
+    <span class="pill"><span id="bodyDot" class="dot"></span><b id="body">Body offline</b></span>
+    <span class="pill">State <b id="state">idle</b></span>
+    <span class="pill">Mood <b id="mood">neutral</b></span>
+    <span class="pill">Camera <b id="cam">off</b></span>
+    <span class="pill">Battery <b id="battery">—</b></span>
+  </div>
+</header>
+
+<main>
+  <section>
+    <h2>What Tony's showing &amp; seeing</h2>
+    <div class="screens">
+      <div>
+        <canvas class="tft" id="tft" width="320" height="240" aria-label="Tony's screen"></canvas>
+        <div class="caption">His screen, live (what the 2" display shows)</div>
+      </div>
+      <div>
+        <div class="screen" id="frameBox"><span>Camera's off.</span><img id="frame" alt="Tony's camera"></div>
+        <div class="caption">His camera <span id="frameTime"></span></div>
+      </div>
+    </div>
+    <div class="controls">
+      <button id="camBtn" class="danger">Camera: off</button>
+      <button id="peekBtn">Peek</button>
+      <label><input type="checkbox" id="live"> Live view</label>
+      <button id="sleepBtn">Put to sleep</button>
+      <button id="stopBtn">Stop talkin'</button>
+      <button id="forgetBtn">Forget convo</button>
+    </div>
+    <div class="controls">
+      <label><input type="checkbox" id="hear"> Hear Tony in this browser</label>
+      <label>Volume <input type="range" id="volume" min="0" max="100" value="70"></label>
+    </div>
+  </section>
+
+  <section class="chat">
+    <h2>Conversation</h2>
+    <div id="log"></div>
+    <form id="say">
+      <input type="text" id="text" placeholder="Type to Tony: what's the weather in New York?" autocomplete="off">
+      <button class="primary">Send</button>
+    </form>
+  </section>
+</main>
+<footer id="info"></footer>
+
+<script src="/face.js"></script>
+<script>
+const $ = (id) => document.getElementById(id);
+let ws, status = {}, liveTimer = null, lastState = null;
+const tft = new TonyScreen($("tft"));
+
+function connect() {
+  ws = new WebSocket(`ws://${location.host}/ws/dashboard`);
+  ws.binaryType = "arraybuffer";
+  ws.onopen = () => {
+    $("log").innerHTML = "";
+    lastState = null;
+    tft.connected(true);
+    if ($("hear").checked) send({ type: "hear", on: true });
+  };
+  ws.onclose = () => { setBody(false, "Server offline"); tft.connected(false); setTimeout(connect, 2000); };
+  ws.onmessage = (e) => {
+    if (typeof e.data !== "string") return playPcm(e.data);
+    const m = JSON.parse(e.data);
+    if (m.type === "status") showStatus(m);
+    else if (m.type === "log") addLog(m);
+    else if (m.type === "card") { if (!m.replay) tft.showCard(m.jpeg, m.seconds); }
+    else if (m.type === "caption") tft.caption(m.text, m.ms);
+    else if (m.type === "frame") { showImage("frame", m.jpeg); $("frameTime").textContent = "· " + new Date().toLocaleTimeString(); }
+    else if (m.type === "emotion") { $("mood").textContent = m.name; tft.emotion(m.name); }
+    else if (m.type === "audio_start") audioNext = 0;
+    else if (m.type === "audio_stop") stopAudio();
+  };
+}
+
+// How wide his mouth opens: the real loudness when his voice plays in this browser, otherwise a natural-looking flap.
+let flap = 0, nextFlap = 0;
+tft.level = () => {
+  if (analyser && sources.length) {
+    const buf = new Float32Array(analyser.fftSize);
+    analyser.getFloatTimeDomainData(buf);
+    let sum = 0;
+    for (const v of buf) sum += v * v;
+    return Math.sqrt(sum / buf.length) * (status.volume ?? 70) / 100;
+  }
+  const now = performance.now();
+  if (now >= nextFlap) {
+    flap = Math.random() < 0.2 ? 0 : 0.03 + Math.random() * 0.17;
+    nextFlap = now + 70 + Math.random() * 90;
+  }
+  return flap;
+};
+const send = (obj) => ws && ws.readyState === 1 && ws.send(JSON.stringify(obj));
+
+function setBody(on, text) { $("bodyDot").className = "dot" + (on ? " on" : ""); $("body").textContent = text; }
+
+function showStatus(s) {
+  status = s;
+  setBody(s.device, s.device ? (s.asleep ? "Body asleep" : "Body connected") : "Body offline");
+  $("state").textContent = s.state;
+  $("cam").textContent = s.camera ? "ON" : "off";
+  $("camBtn").textContent = "Camera: " + (s.camera ? "ON" : "off");
+  $("camBtn").classList.toggle("on", s.camera);
+  $("sleepBtn").textContent = s.asleep ? "Wake up" : "Put to sleep";
+  $("battery").textContent = s.battery ? `${s.battery.percent}% (${Number(s.battery.volts).toFixed(2)} V)` : (s.device ? "USB" : "—");
+  $("volume").value = s.volume;
+  $("info").textContent = `Brain: ${s.model} · Ears: ${s.stt} · Voice: ${s.voice}` + (s.firmware ? ` · Firmware ${s.firmware}` : "");
+  if (!s.camera) { $("frameBox").classList.remove("has"); }
+  tft.setAsleep(s.asleep);
+  tft.setCamera(s.camera);
+  tft.setBattery(s.battery ? s.battery.percent : null);
+  if (s.state !== lastState) { lastState = s.state; tft.setState(s.state); }
+}
+
+function addLog(m) {
+  const div = document.createElement("div");
+  div.className = "msg " + m.who;
+  const who = { you: "You", tony: "Tony", overheard: "Overheard (no wake word)", system: "" }[m.who] ?? m.who;
+  div.innerHTML = (m.who === "you" || m.who === "tony") ? `<div class="t">${who} · ${m.time}</div>` : "";
+  div.append(document.createTextNode(m.who === "overheard" ? `${who}: "${m.text}"` : m.text));
+  $("log").append(div);
+  $("log").scrollTop = $("log").scrollHeight;
+}
+
+function showImage(id, b64) {
+  $(id).src = "data:image/jpeg;base64," + b64;
+  $(id + "Box").classList.add("has");
+}
+
+// Tony's voice, 24 kHz 16-bit mono, scheduled back to back.
+let audioCtx = null, analyser = null, audioNext = 0, sources = [];
+function playPcm(buf) {
+  if (!audioCtx || !$("hear").checked) return;
+  const pcm = new Int16Array(buf);
+  const f = new Float32Array(pcm.length);
+  for (let i = 0; i < pcm.length; i++) f[i] = pcm[i] / 32768;
+  const ab = audioCtx.createBuffer(1, f.length, 24000);
+  ab.copyToChannel(f, 0);
+  const src = audioCtx.createBufferSource();
+  src.buffer = ab;
+  src.connect(analyser);
+  const t = Math.max(audioCtx.currentTime + 0.05, audioNext);
+  src.start(t);
+  audioNext = t + ab.duration;
+  sources.push(src);
+  src.onended = () => { sources = sources.filter((s) => s !== src); };
+}
+function stopAudio() { sources.forEach((s) => { try { s.stop(); } catch {} }); sources = []; audioNext = 0; }
+
+$("say").onsubmit = (e) => {
+  e.preventDefault();
+  const text = $("text").value.trim();
+  if (text) { send({ type: "say", text }); $("text").value = ""; }
+};
+$("camBtn").onclick = () => send({ type: "camera", on: !status.camera });
+$("peekBtn").onclick = () => send({ type: "peek" });
+$("sleepBtn").onclick = () => send({ type: "sleep", on: !status.asleep });
+$("stopBtn").onclick = () => { send({ type: "stop" }); stopAudio(); };
+$("forgetBtn").onclick = () => send({ type: "forget" });
+$("volume").onchange = () => send({ type: "volume", value: Number($("volume").value) });
+$("hear").onchange = () => {
+  if ($("hear").checked && !audioCtx) {
+    audioCtx = new AudioContext();
+    analyser = audioCtx.createAnalyser();
+    analyser.fftSize = 1024;
+    analyser.connect(audioCtx.destination);
+  }
+  if (!$("hear").checked) stopAudio();
+  send({ type: "hear", on: $("hear").checked });
+};
+$("live").onchange = () => {
+  clearInterval(liveTimer);
+  if ($("live").checked) liveTimer = setInterval(() => status.camera && send({ type: "peek" }), 1500);
+};
+connect();
+</script>
+</body>
+</html>

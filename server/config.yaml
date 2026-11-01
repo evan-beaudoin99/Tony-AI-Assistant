@@ -1,0 +1,59 @@
+# How Tony behaves. API keys don't go here: they go in .env (copy .env.example).
+
+server:
+  host: 0.0.0.0          # listen on the whole network so the ESP32 can reach this computer
+  port: 8765
+  dashboard_lan_access: false   # true lets other computers on your network open the dashboard
+
+you:
+  name: ""               # what Tony calls you. Blank and he goes with "pal", "boss", "chief"...
+  home: "New York, NY"   # where "what's the weather?" means, when you don't name a place
+  units: imperial        # imperial (°F, mph) or metric (°C, km/h)
+
+claude:
+  model: claude-haiku-4-5
+  max_tokens: 350
+  memory_turns: 10           # back-and-forths Tony remembers
+  forget_after_minutes: 10   # quiet this long and he starts a fresh conversation
+  web_search: false          # Anthropic's web search for news, scores, etc. Costs extra per search.
+
+wake:
+  words: [tony, toni, tonny, tonie]   # say one of these and Tony answers
+  follow_up_seconds: 8                # after he answers, keep talking without his name
+  listen_after_tap_seconds: 8         # after a button tap, he listens this long without his name
+
+listening:
+  vad_aggressiveness: 2      # 0-3: higher ignores more background noise
+  end_silence_ms: 700        # pause this long and he figures you're done talking
+  min_speech_ms: 300
+  max_utterance_seconds: 15
+
+stt:
+  provider: local            # local (faster-whisper on this computer, free) or openai
+  local_model: base.en       # tiny.en is faster, small.en is more accurate
+  local_device: cpu          # cuda if you've got an NVIDIA GPU set up
+  openai_model: gpt-4o-mini-transcribe
+
+tts:
+  # auto picks openai if OPENAI_API_KEY is set, then elevenlabs if its key + voice are set, then edge (free).
+  provider: elevenlabs
+  openai_model: gpt-4o-mini-tts
+  openai_voice: ash
+  openai_instructions: >
+    Voice: a calm, gravelly New York mafia boss from a 1970s crime movie. Very thick Brooklyn-Italian
+    accent: drop the r's (cawfee, wawta, fuhgeddaboudit) and lean on the vowels. Speak low, slow and
+    unhurried, with quiet menace and a smirk, and almost never raise your voice. Sell the jokes with a
+    deadpan pause before the punchline. Never sound robotic or like a news anchor.
+  elevenlabs_voice_id: "TmVBZfTKg1nQ0by0wjvl"   # "Tony - Brooklyn" in your ElevenLabs account (the old "Tony" was 335yCkwobrf51A3pIHxv)
+  elevenlabs_model: eleven_flash_v2_5
+  # Delivery of the voice. Uncomment to override what the voice is saved with in ElevenLabs.
+  # elevenlabs_stability: 0.4     # 0-1. Lower = more expressive and animated, higher = steadier
+  # elevenlabs_similarity: 0.75   # 0-1. How closely he sticks to the original voice
+  # elevenlabs_style: 0.0         # 0-1. Exaggerates the voice's style. Adds a little delay when high
+  # elevenlabs_speed: 1.05        # 0.7-1.2. 1.0 is normal
+  edge_voice: en-US-GuyNeural   # free, but no accent: Tony's New York comes through in his words only
+  edge_rate: "+8%"
+  volume: 60                 # speaker volume on the device, 0-100
+
+camera:
+  attach_when_on: true       # camera on = Tony gets a fresh look with every question

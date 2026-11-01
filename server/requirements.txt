@@ -1,0 +1,17 @@
+anthropic>=0.69
+fastapi>=0.115
+uvicorn[standard]>=0.30
+httpx>=0.27
+numpy>=1.26
+pillow>=10.3
+pyyaml>=6.0
+python-dotenv>=1.0
+
+# Ears
+faster-whisper>=1.1
+webrtcvad-wheels>=2.0.14
+
+# Voice
+openai>=1.60
+edge-tts>=7.0
+miniaudio>=1.61
