@@ -299,7 +299,7 @@ void updateScreen(uint32_t now) {
 
   const char* text = asleep ? "Zzz... hold the button to wake me."
                      : now < flashUntilMs ? flashCaption.c_str()
-                     : !WiFi.isConnected() ? "No WiFi. Check secrets.h."
+                     : !TONY_USE_USB && !WiFi.isConnected() ? "No WiFi. Check secrets.h."
                      : stateCaption.c_str();
   screen.caption(text);
 
@@ -314,7 +314,14 @@ void updateScreen(uint32_t now) {
 }  // namespace
 
 void setup() {
+#if TONY_USE_USB
+  // The port carries the server link too: big buffers so audio doesn't stall the loop or get dropped.
+  Serial.setRxBufferSize(16384);
+  Serial.setTxBufferSize(8192);
+  Serial.begin(TONY_USB_BAUD);
+#else
   Serial.begin(115200);
+#endif
   updateLed();
   screen.begin();
   screen.splash("Ay! Gimme a sec...");
@@ -327,14 +334,32 @@ void setup() {
   button.begin(PIN_BUTTON);
   lastBattery = battery::read();
 
+#if TONY_USE_USB
+  WiFi.mode(WIFI_OFF);
+  screen.splash("Usin' the USB cable...");
+#else
   WiFi.mode(WIFI_STA);
   WiFi.setHostname("tony");
   WiFi.setSleep(false);  // power save adds lag to every packet
-  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
-  String line = String("Connectin' to ") + WIFI_SSID + "...";
-  screen.splash(strcmp(WIFI_SSID, "your-wifi-name") == 0 ? "Fill in include/secrets.h!" : line.c_str());
-  for (int i = 0; i < 100 && !WiFi.isConnected(); ++i) delay(100);
-  Serial.printf("wifi: %s %s\n", WiFi.isConnected() ? "connected" : "not yet", WiFi.localIP().toString().c_str());
+  net::watchWifi();
+  static const net::WifiNet nets[] = {{WIFI_SSID, WIFI_PASSWORD}, {WIFI_SSID_BACKUP, WIFI_PASSWORD_BACKUP}};
+  net::beginWifi(nets, 2);
+  bool unset = strcmp(WIFI_SSID, "your-wifi-name") == 0;
+  // Give each network (main, then backup if there is one) its full turn before carrying on.
+  const char* trying = nullptr;
+  int waitMs = (*WIFI_SSID_BACKUP ? 2 : 1) * 10000 + 500;
+  for (int t = 0; t < waitMs && !WiFi.isConnected(); t += 100) {
+    if (trying != net::wifiName()) {
+      trying = net::wifiName();
+      String line = String("Connectin' to ") + trying + "...";
+      screen.splash(unset ? "Fill in include/secrets.h!" : line.c_str());
+    }
+    delay(100);
+    net::loopWifi();
+  }
+  Serial.printf("wifi: %s \"%s\" %s\n", WiFi.isConnected() ? "connected to" : "not yet on", net::wifiName(),
+                WiFi.localIP().toString().c_str());
+#endif
 
   if (cameraWanted) cam::begin();
   updateLed();
@@ -351,7 +376,9 @@ void setup() {
   h.disconnected = onDisconnected;
   h.message = onMessage;
   h.binary = onBinary;
-  net::begin(TONY_SERVER_HOST, TONY_SERVER_PORT, TONY_DEVICE_TOKEN, h);
+  static const net::Server servers[] = {{TONY_SERVER_HOST, TONY_SERVER_PORT},
+                                        {TONY_SERVER_HOST_BACKUP, TONY_SERVER_PORT_BACKUP}};
+  net::begin(servers, 2, TONY_DEVICE_TOKEN, h);
 }
 
 void loop() {

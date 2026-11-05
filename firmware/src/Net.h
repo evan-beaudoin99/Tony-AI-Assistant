@@ -20,7 +20,31 @@ struct Handlers {
   void (*binary)(uint8_t kind, const uint8_t* data, size_t len) = nullptr;
 };
 
-void begin(const char* host, uint16_t port, const char* token, const Handlers& handlers);
+struct WifiNet {
+  const char* ssid;
+  const char* password;
+};
+
+struct Server {
+  const char* host;
+  uint16_t port;
+};
+
+// Logs why WiFi drops (wrong password, network not found...). Call before beginWifi().
+void watchWifi();
+
+// Joins nets[0]. If WiFi stays down for 10 s, moves on to the next network (wrapping around), so a backup
+// network takes over when the main one is missing. Entries with an empty ssid are skipped. Keep `nets` alive.
+void beginWifi(const WifiNet* nets, int count);
+// Runs the WiFi failover. loop() calls it; setup() can call it while waiting for the first connection.
+void loopWifi();
+// The network currently being joined (or joined).
+const char* wifiName();
+
+// Connects to servers[0]. If it can't be reached for 12 s while WiFi is up, tries the next server (wrapping
+// around). Entries with an empty host are skipped. Keep `servers` alive.
+// While the server is unreachable, loop() prints the likely reason to the serial monitor every 10 s.
+void begin(const Server* servers, int count, const char* token, const Handlers& handlers);
 void loop();
 bool connected();
 bool sendJson(const JsonDocument& doc);

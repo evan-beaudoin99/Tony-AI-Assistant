@@ -259,6 +259,7 @@ class Tony:
         elif kind == "playback_done":
             await self.after_speaking()
         elif kind == "snap_failed":
+            log.warning("Tony couldn't take a photo: %s", msg.get("reason", "no reason given"))
             dev.got_frame(None)
 
     async def on_mic(self, pcm: bytes) -> None:

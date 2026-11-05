@@ -100,6 +100,7 @@ class Screen {
   void clear();
 
  private:
+  void drawWifi(int x, int y, bool on);
   void drawCamera(int x, int y, bool on);
   void drawMic(int x, int y);
   void drawBattery(int x, int y, int percent);

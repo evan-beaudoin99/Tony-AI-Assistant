@@ -15,3 +15,6 @@ webrtcvad-wheels>=2.0.14
 openai>=1.60
 edge-tts>=7.0
 miniaudio>=1.61
+
+# USB link (python -m tony.usb_bridge)
+pyserial>=3.5

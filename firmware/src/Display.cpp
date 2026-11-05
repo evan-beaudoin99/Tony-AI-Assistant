@@ -52,21 +52,36 @@ void Screen::status(const StatusInfo& s, bool force) {
   uint16_t link = s.server ? GREEN : s.wifi ? ORANGE : RED;
   lcd_.fillCircle(72, 20, 5, link);
 
-  int x = ui::W - 10;
-  x -= 30;
+  // Right to left: WiFi in the corner, then battery, camera, mic.
+  int x = ui::W - 10 - 22;
+  drawWifi(x, 10, s.wifi);
+  x -= 6 + 29;
   if (s.battery >= 0) {
     drawBattery(x, 13, s.battery);
   } else {
     lcd_.setFont(&fonts::Font2);
     lcd_.setTextColor(SOFT, BLACK);
     lcd_.setTextDatum(textdatum_t::middle_right);
-    lcd_.drawString("USB", ui::W - 10, 20);
+    lcd_.drawString("USB", x + 29, 20);
   }
   x -= 42;
   drawCamera(x, 12, s.camera);
   if (s.listening && !s.asleep) {
     x -= 26;
     drawMic(x, 10);
+  }
+}
+
+// A WiFi fan in a 22x18 box: green when joined, gray with a red slash when not.
+void Screen::drawWifi(int x, int y, bool on) {
+  uint16_t c = on ? GREEN : GRAY;
+  int cx = x + 11, cy = y + 17;
+  lcd_.fillArc(cx, cy, 15, 13, 225, 315, c);
+  lcd_.fillArc(cx, cy, 10, 8, 225, 315, c);
+  lcd_.fillCircle(cx, cy - 1, 2, c);
+  if (!on) {
+    lcd_.drawLine(x + 1, y + 18, x + 21, y + 1, RED);
+    lcd_.drawLine(x + 2, y + 18, x + 22, y + 1, RED);
   }
 }
 

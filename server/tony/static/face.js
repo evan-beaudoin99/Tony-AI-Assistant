@@ -577,13 +577,16 @@
       ctx.fillText("TONY", 10, 21);
       this.circle(ctx, 72, 20, 5, s.server ? C.green : s.wifi ? C.orange : C.red);
 
-      let x = UI.W - 10 - 30;
+      // Right to left: WiFi in the corner, then battery, camera, mic.
+      let x = UI.W - 10 - 22;
+      this.drawWifi(ctx, x, 10, s.wifi);
+      x -= 6 + 29;
       if (s.battery >= 0) this.drawBattery(ctx, x, 13, s.battery);
       else {
         ctx.font = "13px Arial, Helvetica, sans-serif";
         ctx.fillStyle = C.soft;
         ctx.textAlign = "right";
-        ctx.fillText("USB", UI.W - 10, 21);
+        ctx.fillText("USB", x + 29, 21);
       }
       x -= 42;
       this.drawCamera(ctx, x, 12, s.camera);
@@ -601,6 +604,26 @@
       ctx.beginPath();
       if (stroke) { ctx.strokeStyle = c; ctx.lineWidth = 1; ctx.roundRect(x + 0.5, y + 0.5, w - 1, h - 1, r); ctx.stroke(); }
       else { ctx.fillStyle = c; ctx.roundRect(x, y, w, h, r); ctx.fill(); }
+    }
+
+    drawWifi(ctx, x, y, on) {
+      const c = on ? C.green : C.gray;
+      const cx = x + 11.5, cy = y + 17.5;
+      ctx.strokeStyle = c;
+      ctx.lineWidth = 2;
+      [14, 9].forEach((r) => {
+        ctx.beginPath();
+        ctx.arc(cx, cy, r, Math.PI * 1.25, Math.PI * 1.75);
+        ctx.stroke();
+      });
+      this.circle(ctx, x + 11, y + 16, 2, c);
+      if (!on) {
+        ctx.strokeStyle = C.red;
+        ctx.beginPath();
+        ctx.moveTo(x + 1.5, y + 18.5);
+        ctx.lineTo(x + 21.5, y + 1.5);
+        ctx.stroke();
+      }
     }
 
     drawBattery(ctx, x, y, percent) {

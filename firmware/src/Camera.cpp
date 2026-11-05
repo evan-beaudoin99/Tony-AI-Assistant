@@ -39,7 +39,10 @@ bool begin() {
 
   esp_err_t err = esp_camera_init(&c);
   if (err != ESP_OK) {
-    Serial.printf("camera: init failed 0x%x\n", err);
+    // The driver needs internal DMA RAM as well as PSRAM; with WiFi, audio and the screen running, that can run out.
+    Serial.printf("camera: init failed 0x%x (%s). Free internal RAM %u, largest DMA block %u\n", err,
+                  esp_err_to_name(err), heap_caps_get_free_size(MALLOC_CAP_INTERNAL),
+                  heap_caps_get_largest_free_block(MALLOC_CAP_DMA));
     return false;
   }
   sensor_t* s = esp_camera_sensor_get();

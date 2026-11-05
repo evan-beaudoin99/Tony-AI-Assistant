@@ -134,7 +134,26 @@ Install [PlatformIO](https://platformio.org/install) (the VS Code / Cursor exten
 
    If the upload can't connect, hold **BOOT**, tap **RESET**, release **BOOT**, and try again.
 
-Tony shows his splash screen, connects, and says hi.
+Tony shows his splash screen, connects, and says hi. The WiFi icon in the top-right corner of his screen is green
+once he's on the network.
+
+**Backups.** Fill in `WIFI_SSID_BACKUP` / `WIFI_PASSWORD_BACKUP` and `TONY_SERVER_HOST_BACKUP` /
+`TONY_SERVER_PORT_BACKUP` in `secrets.h` and Tony switches to them when the main network (10 s) or server (12 s)
+can't be reached, going back and forth until one works. Leave them `""` to skip.
+
+**No WiFi? Use the USB cable.** Set `TONY_USE_USB` to `true` in `firmware/include/config.h` and upload. Keep the
+board plugged into the **COM/UART** port, run the server as usual, and in a second terminal:
+
+```powershell
+cd server
+python -m tony.usb_bridge        # or: python -m tony.usb_bridge COM5
+```
+
+The bridge carries Tony's link to the server over the cable and prints his log lines (close `pio device monitor`
+first: only one program can have the port). Set `TONY_USE_USB` back to `false` for WiFi.
+
+Building him for the first time? Bring the parts up one at a time with the hardware tests in
+[`unit-tests/`](unit-tests): camera (with a live view in your browser), microphone + amplifier, then speaker.
 
 ## Using Tony
 
@@ -228,6 +247,7 @@ Tony-AI-Assistant/
 │       ├── Camera.*          OV3660 on/off and snapshots
 │       ├── Net.*             WiFi + WebSocket link to the server
 │       └── Button.h, Battery.h, RingBuffer.h
+├── unit-tests/               hardware bring-up tests: camera, mic + amp, speaker
 └── server/                   Tony's brain: Python
     ├── config.yaml           how Tony behaves
     ├── .env.example          API keys go in .env
