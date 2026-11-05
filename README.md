@@ -76,6 +76,10 @@ transcribed.
 See **[PARTS_LIST.md](PARTS_LIST.md)** for everything you need (about $15-25 of extras on top of the ESP32 board,
 screen, mic, speaker and cells), and **[schematic/WIRING.md](schematic/WIRING.md)** for the wiring, pin by pin.
 
+<p align="center">
+  <img src="schematic/tony_wiring.svg" alt="Tony's wiring schematic" width="600">
+</p>
+
 The [`3d-printed-stand/`](3d-printed-stand) folder is reserved for the stand's design files (not added yet).
 
 ## Setup
